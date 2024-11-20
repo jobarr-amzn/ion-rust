@@ -334,22 +334,25 @@ impl<'top> Iterator for BinaryEExpArgsInputIter<'top> {
                 // or delimited.
                 let (group_header_flex_uint, _remaining_args_input) =
                     try_or_some_err!(self.remaining_args_buffer.read_flex_uint());
-                let bytes_to_read = match group_header_flex_uint.value() {
-                    0 => todo!("delimited argument groups"),
-                    n_bytes => n_bytes as usize,
-                };
-                // If it's length-prefixed, we don't need to inspect its contents. We can build an
-                // ArgGroup using the unexamined bytes; we'll parse them later if they get evaluated.
-                let arg_group_length = group_header_flex_uint.size_in_bytes() + bytes_to_read;
-                let arg_group = BinaryEExpArgGroup::new(
-                    parameter,
-                    self.remaining_args_buffer.slice(0, arg_group_length),
-                    group_header_flex_uint.size_in_bytes() as u8,
-                );
-                (
-                    EExpArg::new(parameter, EExpArgExpr::ArgGroup(arg_group)),
-                    self.remaining_args_buffer.consume(arg_group_length),
-                )
+                eprintln!("group_header_flex_uint: {group_header_flex_uint:?}");
+                let bytes_to_read = group_header_flex_uint.value() as usize;
+
+                if bytes_to_read > 0 {
+                    // If it's length-prefixed, we don't need to inspect its contents. We can build an
+                    // ArgGroup using the unexamined bytes; we'll parse them later if they get evaluated.
+                    let arg_group_length = group_header_flex_uint.size_in_bytes() + bytes_to_read;
+                    let arg_group = BinaryEExpArgGroup::new(
+                        parameter,
+                        self.remaining_args_buffer.slice(0, arg_group_length),
+                        group_header_flex_uint.size_in_bytes() as u8,
+                    );
+                    (
+                        EExpArg::new(parameter, EExpArgExpr::ArgGroup(arg_group)),
+                        self.remaining_args_buffer.consume(arg_group_length),
+                    )
+                } else {
+                    todo!("delimited argument groups")
+                }
             }
         };
 

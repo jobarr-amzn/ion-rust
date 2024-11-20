@@ -248,9 +248,34 @@ impl MacroTable {
                 expansion_analysis: ExpansionAnalysis::default(),
             })),
             Rc::new(Macro::named(
+                "annotate",
+                MacroSignature::new(vec![
+                    Parameter::new(
+                        "annotations",
+                        ParameterEncoding::Tagged,
+                        ParameterCardinality::ZeroOrMore,
+                        RestSyntaxPolicy::NotAllowed,
+                    ),
+                    Parameter::new(
+                        "value_to_annotate",
+                        ParameterEncoding::Tagged,
+                        ParameterCardinality::ExactlyOne,
+                        RestSyntaxPolicy::NotAllowed,
+                    ),
+                ])
+                    .unwrap(),
+                MacroKind::Annotate,
+                ExpansionAnalysis {
+                    could_produce_system_value: true,
+                    must_produce_exactly_one_value: true,
+                    can_be_lazily_evaluated_at_top_level: false,
+                    expansion_singleton: None,
+                },
+            )),
+            Rc::new(Macro::named(
                 "make_string",
                 MacroSignature::new(vec![Parameter::new(
-                    "text_values",
+                    "content",
                     ParameterEncoding::Tagged,
                     ParameterCardinality::ZeroOrMore,
                     RestSyntaxPolicy::Allowed,
@@ -264,6 +289,156 @@ impl MacroTable {
                     expansion_singleton: Some(ExpansionSingleton {
                         is_null: false,
                         ion_type: IonType::String,
+                        num_annotations: 0,
+                    }),
+                },
+            )),
+            Rc::new(Macro::named(
+                "make_symbol",
+                MacroSignature::new(vec![Parameter::new(
+                    "content",
+                    ParameterEncoding::Tagged,
+                    ParameterCardinality::ZeroOrMore,
+                    RestSyntaxPolicy::Allowed,
+                )])
+                    .unwrap(),
+                MacroKind::None, //TODO: https://github.com/amazon-ion/ion-rust/issues/661
+                ExpansionAnalysis {
+                    could_produce_system_value: false,
+                    must_produce_exactly_one_value: true,
+                    can_be_lazily_evaluated_at_top_level: true,
+                    expansion_singleton: Some(ExpansionSingleton {
+                        is_null: false,
+                        ion_type: IonType::Symbol,
+                        num_annotations: 0,
+                    }),
+                },
+            )),
+            Rc::new(Macro::named(
+                "make_blob",
+                MacroSignature::new(vec![Parameter::new(
+                    "lobs",
+                    ParameterEncoding::Tagged,
+                    ParameterCardinality::ZeroOrMore,
+                    RestSyntaxPolicy::Allowed,
+                )])
+                    .unwrap(),
+                MacroKind::None, //TODO: https://github.com/amazon-ion/ion-rust/issues/661
+                ExpansionAnalysis {
+                    could_produce_system_value: false,
+                    must_produce_exactly_one_value: true,
+                    can_be_lazily_evaluated_at_top_level: true,
+                    expansion_singleton: Some(ExpansionSingleton {
+                        is_null: false,
+                        ion_type: IonType::Blob,
+                        num_annotations: 0,
+                    }),
+                },
+            )),
+
+            Rc::new(Macro::named(
+                "make_decimal",
+                MacroSignature::new(vec![
+                    Parameter::new(
+                        "coefficient",
+                        ParameterEncoding::Tagged, //TODO: tagless encoding, flex_int
+                        ParameterCardinality::ExactlyOne,
+                        RestSyntaxPolicy::NotAllowed,
+                    ),
+                    Parameter::new(
+                        "exponent",
+                        ParameterEncoding::Tagged, //TODO: tagless encoding, flex_int
+                        ParameterCardinality::ExactlyOne,
+                        RestSyntaxPolicy::NotAllowed,
+                    )]).unwrap(),
+                MacroKind::None, //TODO: https://github.com/amazon-ion/ion-rust/issues/661
+                ExpansionAnalysis {
+                    could_produce_system_value: false,
+                    must_produce_exactly_one_value: true,
+                    can_be_lazily_evaluated_at_top_level: true,
+                    expansion_singleton: Some(ExpansionSingleton {
+                        is_null: false,
+                        ion_type: IonType::List,
+                        num_annotations: 0,
+                    }),
+                },
+            )),
+
+            Rc::new(Macro::named(
+                "make_timestamp",
+                MacroSignature::new(vec![
+                    Parameter::new(
+                        "year",
+                        ParameterEncoding::Tagged, //TODO: tagless encoding, uint16
+                        ParameterCardinality::ExactlyOne,
+                        RestSyntaxPolicy::NotAllowed,
+                    ),
+                    Parameter::new(
+                        "month",
+                        ParameterEncoding::Tagged, //TODO: tagless encoding, uint8
+                        ParameterCardinality::ZeroOrOne,
+                        RestSyntaxPolicy::NotAllowed,
+                    ),
+                    Parameter::new(
+                        "day",
+                        ParameterEncoding::Tagged, //TODO: tagless encoding, uint8
+                        ParameterCardinality::ZeroOrOne,
+                        RestSyntaxPolicy::NotAllowed,
+                    ),
+                    Parameter::new(
+                        "hour",
+                        ParameterEncoding::Tagged, //TODO: tagless encoding, uint8
+                        ParameterCardinality::ZeroOrOne,
+                        RestSyntaxPolicy::NotAllowed,
+                    ),
+                    Parameter::new(
+                        "minute",
+                        ParameterEncoding::Tagged, //TODO: tagless encoding, uint8
+                        ParameterCardinality::ZeroOrOne,
+                        RestSyntaxPolicy::NotAllowed,
+                    ),
+                    Parameter::new(
+                        "second",
+                        ParameterEncoding::Tagged, // Should be decimal. Macro-shaped make_decimal?
+                        ParameterCardinality::ZeroOrOne,
+                        RestSyntaxPolicy::NotAllowed,
+                    ),
+                    Parameter::new(
+                        "offset_minutes",
+                        ParameterEncoding::Tagged, //TODO: tagless encoding, int16
+                        ParameterCardinality::ZeroOrOne,
+                        RestSyntaxPolicy::NotAllowed,
+                    )]).unwrap(),
+                MacroKind::None, //TODO: https://github.com/amazon-ion/ion-rust/issues/661
+                ExpansionAnalysis {
+                    could_produce_system_value: false,
+                    must_produce_exactly_one_value: true,
+                    can_be_lazily_evaluated_at_top_level: true,
+                    expansion_singleton: Some(ExpansionSingleton {
+                        is_null: false,
+                        ion_type: IonType::List,
+                        num_annotations: 0,
+                    }),
+                },
+            )),
+
+            Rc::new(Macro::named(
+                "make_list",
+                MacroSignature::new(vec![Parameter::new(
+                    "sequences",
+                    ParameterEncoding::Tagged,
+                    ParameterCardinality::ZeroOrMore,
+                    RestSyntaxPolicy::Allowed,
+                )])
+                    .unwrap(),
+                MacroKind::None, //TODO: https://github.com/amazon-ion/ion-rust/issues/661
+                ExpansionAnalysis {
+                    could_produce_system_value: false,
+                    must_produce_exactly_one_value: true,
+                    can_be_lazily_evaluated_at_top_level: true,
+                    expansion_singleton: Some(ExpansionSingleton {
+                        is_null: false,
+                        ion_type: IonType::List,
                         num_annotations: 0,
                     }),
                 },
@@ -293,30 +468,27 @@ impl MacroTable {
                 },
             )),
             Rc::new(Macro::named(
-                "annotate",
-                MacroSignature::new(vec![
-                    Parameter::new(
-                        "annotations",
-                        ParameterEncoding::Tagged,
-                        ParameterCardinality::ZeroOrMore,
-                        RestSyntaxPolicy::NotAllowed,
-                    ),
-                    Parameter::new(
-                        "value_to_annotate",
-                        ParameterEncoding::Tagged,
-                        ParameterCardinality::ExactlyOne,
-                        RestSyntaxPolicy::NotAllowed,
-                    ),
-                ])
-                .unwrap(),
-                MacroKind::Annotate,
+                "make_struct",
+                MacroSignature::new(vec![Parameter::new(
+                    "structs",
+                    ParameterEncoding::Tagged,
+                    ParameterCardinality::ZeroOrMore,
+                    RestSyntaxPolicy::Allowed,
+                )])
+                    .unwrap(),
+                MacroKind::None, //TODO: https://github.com/amazon-ion/ion-rust/issues/661
                 ExpansionAnalysis {
-                    could_produce_system_value: true,
+                    could_produce_system_value: false,
                     must_produce_exactly_one_value: true,
-                    can_be_lazily_evaluated_at_top_level: false,
-                    expansion_singleton: None,
+                    can_be_lazily_evaluated_at_top_level: true,
+                    expansion_singleton: Some(ExpansionSingleton {
+                        is_null: false,
+                        ion_type: IonType::List,
+                        num_annotations: 0,
+                    }),
                 },
             )),
+
             // This macro is equivalent to:
             //    (macro set_symbols (symbols*)
             //      $ion_encoding::(
@@ -659,6 +831,33 @@ impl MacroTable {
                     }),
                 },
             })),
+            Rc::new(Macro::named(
+                "make_field",
+                MacroSignature::new(vec![
+                    Parameter::new(
+                        "field_name",
+                        ParameterEncoding::Tagged, //TODO: tagless encoding, flex_sym
+                        ParameterCardinality::ExactlyOne,
+                        RestSyntaxPolicy::NotAllowed,
+                    ),
+                    Parameter::new(
+                        "value",
+                        ParameterEncoding::Tagged,
+                        ParameterCardinality::ExactlyOne,
+                        RestSyntaxPolicy::NotAllowed,
+                    )]).unwrap(),
+                MacroKind::None, //TODO: https://github.com/amazon-ion/ion-rust/issues/661
+                ExpansionAnalysis {
+                    could_produce_system_value: false,
+                    must_produce_exactly_one_value: true,
+                    can_be_lazily_evaluated_at_top_level: true,
+                    expansion_singleton: Some(ExpansionSingleton {
+                        is_null: false,
+                        ion_type: IonType::List,
+                        num_annotations: 0,
+                    }),
+                },
+            )),
             // Adding a new system macro? Make sure you update FIRST_USER_MACRO_ID
         ]
     }

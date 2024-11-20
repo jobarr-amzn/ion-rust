@@ -183,6 +183,7 @@ impl<'a> BinaryBuffer<'a> {
     #[inline]
     pub(crate) fn peek_opcode(&self) -> Option<Opcode> {
         if let Some(&byte) = self.data.first() {
+            eprintln!("opcode byte: {byte:#x}");
             Some(ION_1_1_OPCODES[byte as usize])
         } else {
             None
@@ -403,7 +404,10 @@ impl<'a> BinaryBuffer<'a> {
             OpcodeKind::Value(_ion_type) => {
                 ParseValueExprResult::Value(self.read_value_without_annotations(opcode))
             }
-            _other => return self.read_nop_then_sequence_value(),
+            _other => {
+                eprintln!("opcode: {:?}", opcode);
+                return self.read_nop_then_sequence_value()
+            },
         };
         let allocator = self.context().allocator();
         match result {
@@ -886,6 +890,11 @@ impl<'a> BinaryBuffer<'a> {
             }
             // Length-prefixed is a special case.
             EExpressionWithLengthPrefix => return self.read_eexp_with_length_prefix(opcode),
+            SystemMacroInvoke => {
+                let (fixed_uint, input_after_opcode) = self.consume(1).read_fixed_uint(1)?;
+                let address = fixed_uint.value().expect_usize()?;
+                (address, input_after_opcode)
+            },
             _ => unreachable!("read_e_expression called with invalid opcode"),
         };
         self.read_eexp_with_address(input_after_address, macro_address)
@@ -901,6 +910,8 @@ impl<'a> BinaryBuffer<'a> {
         macro_address: MacroAddress,
     ) -> ParseResult<'a, BinaryEExpression_1_1<'a>> {
         // Get a reference to the macro that lives at that address
+        let macro_table = self.context.macro_table();
+        eprintln!("{macro_table:?}");
         let macro_ref = self
             .context
             .macro_table()

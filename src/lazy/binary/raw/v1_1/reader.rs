@@ -1119,4 +1119,31 @@ mod tests {
         }
         Ok(())
     }
+
+    #[test]
+    fn system_macro() -> IonResult<()> {
+        let data: Vec<u8> = vec![
+            0xe0, 0x01, 0x01, 0xea, // IVM
+            0xef, 0x0b, 0x02, 0x01,  // system macro 'set_symbols' with presence bitmap
+            0x93, 0x66, 0x6f, 0x6f, // "foo"
+            0xf0, // macro delimiter end
+            0xe1, 0x01 // invoke SID $1
+        ];
+
+        let empty_context = EncodingContext::empty();
+        let context = empty_context.get_ref();
+        let mut reader = LazyRawBinaryReader_1_1::new(&data);
+        let _ivm = reader.next(context)?.expect_ivm()?;
+
+        assert_eq!(
+            reader
+                .next(context)?
+                .expect_value()?
+                .read()?
+                .expect_symbol()?,
+            RawSymbolRef::SymbolId(1)
+        );
+
+        Ok(())
+    }
 }

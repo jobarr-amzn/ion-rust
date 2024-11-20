@@ -131,6 +131,11 @@ impl Opcode {
                 InOpcode(1),
                 OpcodeKind::Value(IonType::Symbol),
             ),
+            (0xE, 0xF) => (
+                SystemMacroInvoke,
+                Unknown,
+                OpcodeKind::EExp,
+            ),
             (0xF, 0x0) => (DelimitedContainerClose, InOpcode(0), OpcodeKind::Control),
             (0xF, 0x1) => (ListDelimited, Unknown, OpcodeKind::Value(IonType::List)),
             (0xF, 0x2) => (SExpDelimited, Unknown, OpcodeKind::Value(IonType::SExp)),
